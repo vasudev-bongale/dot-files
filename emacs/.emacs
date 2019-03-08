@@ -5,10 +5,24 @@
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
 ;; You may delete these explanatory comments.
-(package-initialize)
 (require 'package)
-(add-to-list 'package-archives
-    '("melpa-stable" . "https://stable.melpa.org/packages/"))
+(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                    (not (gnutls-available-p))))
+       (proto (if no-ssl "http" "https")))
+  (when no-ssl
+    (warn "\
+Your version of Emacs does not support SSL connections,
+which is unsafe because it allows man-in-the-middle attacks.
+There are two things you can do about this warning:
+1. Install an Emacs version that does support SSL and be safe.
+2. Remove this warning from your init file so you won't see it again."))
+  ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+  (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+  ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
+  (when (< emacs-major-version 24)
+    ;; For important compatibility libraries like cl-lib
+    (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
+(package-initialize)
 (setq org-todo-keywords
       '((sequence "NEXT(n)" "SOMEDAY(s)" "TODO(t)" "WAITING(w)" "|" "DONE(d)" "CANCELLED(c)")))
 ;; inhibit the startup screen
@@ -26,7 +40,7 @@
       monokai-height-plus-3 1.0
       monokai-height-plus-4 1.0)
 ;; Set a default font
-(set-default-font "Courier 20" nil t)
+(set-default-font "Courier 18" nil t)
 ;; Set global variable for visual-line wrapping
 (global-visual-line-mode 1)
 ;; Setting shortcuts for agenda views
@@ -72,9 +86,12 @@
      ("#F309DF" . 85)
      ("#3C3D37" . 100))))
  '(magit-diff-use-overlays nil)
- '(package-selected-packages (quote (markchars)))
+ '(package-selected-packages
+   (quote
+    (org-bullets rainbow-mode beacon switch-window which-key ivy sunrise-x-modeline sunrise-x-buttons sunrise-commander symon fancy-battery spaceline projectile markdown-mode markchars)))
  '(pos-tip-background-color "#FFFACE")
  '(pos-tip-foreground-color "#272822")
+ '(symon-mode t)
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
    (quote
@@ -108,3 +125,99 @@
  )
 ;; set scrollbar mode to disabled by default
 (scroll-bar-mode -1)
+;; Add latex bin path
+(getenv "PATH")
+ (setenv "PATH"
+(concat
+ "/Library/TeX/texbin" ":"
+(getenv "PATH")))
+;; Add shortcut to open the organizer file quicly
+(global-set-key (kbd "C-c o") 
+                (lambda () (interactive) (find-file "~/Dropbox/ORG/organizer.org")))
+;; Change yes-or-no questions into y-n questions
+(defalias 'yes-or-no-p 'y-or-n-p)
+;; Projectile - project manager - recognizes git
+(use-package projectile
+  :ensure t
+  :init
+    (projectile-mode 1))
+(global-set-key (kbd "<f5>") 'projectile-compile-project)
+;; New startup Dashboard
+(use-package dashboard
+  :ensure t
+  :config
+    (dashboard-setup-startup-hook)
+    (setq dashboard-items '((recents  . 5)
+                            (projects . 5)))
+    (setq dashboard-banner-logo-title ""))
+;; Customize mode-line
+(use-package spaceline
+  :ensure t
+  :config
+  (require 'spaceline-config)
+    (setq spaceline-buffer-encoding-abbrev-p nil)
+    (setq spaceline-line-column-p nil)
+    (setq spaceline-line-p nil)
+    (setq powerline-default-separator (quote arrow))
+    (spaceline-spacemacs-theme))
+    (setq powerline-default-separator nil)
+    (setq line-number-mode t)
+    (setq column-number-mode t)
+    (setq display-time-24hr-format t)
+    (setq display-time-format "%H:%M - %d %B %Y")
+    (display-time-mode 1)
+;; Batter Indicator
+(use-package fancy-battery
+  :ensure t
+  :config
+    (setq fancy-battery-show-percentage t)
+    (setq battery-update-interval 15)
+    (if window-system
+      (fancy-battery-mode)
+      (display-battery-mode)))
+;; System Monitor
+(use-package symon
+  :ensure t
+  :bind
+  ("s-h" . symon-mode))
+(use-package ivy
+  :ensure t)
+;; Make scrolling nice
+(setq scroll-conservatively 100)
+;; Auto-completion of keys
+(use-package which-key
+  :ensure t
+  :config
+    (which-key-mode))
+(defun kill-current-buffer ()
+  "Kills the current buffer."
+  (interactive)
+  (kill-buffer (current-buffer)))
+(global-set-key (kbd "C-x k") 'kill-current-buffer)
+(global-set-key (kbd "C-x b") 'ibuffer)
+;; Beacon - Highlights the cursor when a buffer is changed
+(use-package beacon
+  :ensure t
+  :config
+    (beacon-mode 1))
+;; Rainbow mode
+(use-package rainbow-mode
+  :ensure t
+  :init
+    (add-hook 'prog-mode-hook 'rainbow-mode))
+(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+;; Org common settings
+(setq org-ellipsis " ")
+(setq org-src-fontify-natively t)
+(setq org-src-tab-acts-natively t)
+(setq org-confirm-babel-evaluate nil)
+(setq org-export-with-smart-quotes t)
+(setq org-src-window-setup 'current-window)
+(add-hook 'org-mode-hook 'org-indent-mode)
+;; Beautify bullets in org
+(use-package org-bullets
+  :ensure t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode))))
+
+
