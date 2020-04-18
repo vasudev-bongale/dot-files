@@ -53,10 +53,13 @@ There are two things you can do about this warning:
 ;; Keeping track of when a TODO task was marked DONE
 (setq org-log-done 'time)
 ;; Need to set org-agenda-files
-(setq org-agenda-files (list "~/ncsu/coursework/csc724/csc724.org"
-			     "~/ncsu/coursework/csc505/csc505.org"
-			     "~/ncsu/coursework/csc540/csc540.org"
-			     "~/Dropbox/ORG"))
+(load-library "find-lisp")
+(setq org-agenda-files
+   (find-lisp-find-files "~/Dropbox/ORG" "\.org$"))
+;;(setq org-agenda-files (list "~/ncsu/coursework/csc724/csc724.org"
+;;			     "~/ncsu/coursework/csc505/csc505.org"
+;;			     "~/ncsu/coursework/csc540/csc540.org"
+;;			     "~/Dropbox/ORG"))
 ;; Ability to open files externally from dired
 ;; (require 'openwith)
 ;; (openwith-mode t)
